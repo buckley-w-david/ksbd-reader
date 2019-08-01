@@ -1,0 +1,29 @@
+{
+  "manifest_version": 2,
+  "name": "Kill 6 Billion Demons reader",
+  "version": "1.6.0",
+
+  "description": "Removes all non-reader page elements on killsixbilliondemons.com",
+
+  "icons": {
+    "48": "icons/ksbd-48.png"
+  },
+
+  "content_scripts": [
+    {
+      "matches": ["*://*.killsixbilliondemons.com/comic/*"],
+      "js": ["ksbd-reader.js"]
+    }
+  ],
+
+  "permissions": [
+    "browsingData",
+    "storage"
+  ],
+
+  "applications": {
+    "gecko": {
+      "id": "ksbd-reader@davidbuckley.ca"
+    }
+  }
+}
