@@ -1,12 +1,11 @@
-let count = 0
 /**
  * Insert the page-hiding CSS into the active tab,
  * then get the beast URL and
  * send a "beastify" message to the content script in the active tab.
  */
-function convert(tabs) {
+function convert(tab) {
   browser.tabs.insertCSS({file: "view/reader.css"}).then(() => {
-    browser.tabs.sendMessage(tabs[0].id, {
+    browser.tabs.sendMessage(tab.id, {
       command: "convert",
     });
   });
@@ -16,9 +15,9 @@ function convert(tabs) {
  * Remove the page-hiding CSS from the active tab,
  * send a "reset" message to the content script in the active tab.
  */
-function reset(tabs) {
+function reset(tab) {
   browser.tabs.removeCSS({file: "view/reader.css"}).then(() => {
-    browser.tabs.sendMessage(tabs[0].id, {
+    browser.tabs.sendMessage(tab.id, {
       command: "reset",
     });
   });
@@ -38,15 +37,22 @@ function reportExecuteScriptError(error) {
  * If we couldn"t inject the script, handle the error.
  */
 browser.browserAction.onClicked.addListener(async () => {
-  browser.tabs.executeScript({file: "/content_scripts/reader.js"})
-  count = (count+1)&1
-  if (count) {
-      browser.tabs.query({active: true, currentWindow: true})
-        .then(convert)
-        .catch(reportExecuteScriptError);
-  } else {
-      browser.tabs.query({active: true, currentWindow: true})
-        .then(reset)
-        .catch(reportExecuteScriptError);
-  }
+  await browser.tabs.executeScript({file: "/content_scripts/reader.js"})
+
+  await browser.tabs.query({active: true, currentWindow: true})
+    .then(async (tabs) => {
+        const activeTab = tabs[0];
+        // console.log(activeTab)
+        browser.tabs.sendMessage(activeTab.id, {
+            command: 'converted?'
+        })
+        .then((response) => {
+            if (response.result) {
+                reset(activeTab)
+            } else {
+                convert(activeTab)
+            }
+        })
+    })
+    .catch(reportExecuteScriptError);
 });

@@ -52,32 +52,34 @@
         "URL": undefined,
         "node": undefined,
         "next": undefined,
-        "prev": undefined,
+        "previous": undefined,
     },
     "current-page": {
         "URL": undefined,
         "node": undefined,
         "next": undefined,
-        "prev": undefined,
+        "previous": undefined,
     },
     "previous-page": {
         "URL": undefined,
         "node": undefined,
         "next": undefined,
-        "prev": undefined,
+        "previous": undefined,
     }
   }
+
+  let converted = false;
 
   const Selectors = {
       comic: "#comic img",
       next: ".comic-nav-next[href]",
-      prev: ".comic-nav-prev[href]",
+      previous: ".comic-nav-previous[href]",
       readerComic: ".reader img",
   }
 
-  async function preloadPage(url, target) {
-    console.log(`Preloading ${url} into ${target}`)
-    await fetch(url)
+  async function preloadPage(url) {
+    console.log(`Preloading ${url}`)
+    return await fetch(url)
       .then((response) => {
           if (response.status !== 200) {
               console.error(`Bad status while fetching: ${response}`)
@@ -88,12 +90,12 @@
           const html = document.createElement("html")
           html.innerHTML = text
           const next = html.querySelector(Selectors.next)
-          const prev = html.querySelector(Selectors.prev)
-          PageStorage[target] = {
+          const previous = html.querySelector(Selectors.previous)
+          return {
               "URL": url,
               "node": html.querySelector(Selectors.comic),
               "next": next?.getAttribute("href"),
-              "prev": prev?.getAttribute("href"),
+              "previous": previous?.getAttribute("href"),
           }
       })
       .catch((error) => {
@@ -106,21 +108,23 @@
 
     comic = document.querySelector(Selectors.comic)
     nextPageElement = document.querySelector(Selectors.next)
-    prevPageElement = document.querySelector(Selectors.prev)
-    const promises = []
+    previousPageElement = document.querySelector(Selectors.previous)
+    let nextPromise = Promise.resolve({})
+    let previousPromise = Promise.resolve({})
 
     if (nextPageElement !== null) {
-        promises.push(preloadPage(nextPageElement.getAttribute("href"), 'next-page'))
+        nextPromise = preloadPage(nextPageElement.getAttribute("href"))
     }
-    if (prevPageElement !== null) {
-        promises.push(preloadPage(prevPageElement.getAttribute("href"), 'previous-page'))
+    if (previousPageElement !== null) {
+        previousPromise = preloadPage(previousPageElement.getAttribute("href"))
     }
+
 
     PageStorage['current-page'] = {
       "URL": document.location,
       "node": comic,
       "next": nextPageElement?.getAttribute("href"),
-      "prev": prevPageElement?.getAttribute("href"),
+      "previous": previousPageElement?.getAttribute("href"),
   }
 
     const readerSection = document.createElement("section")
@@ -131,11 +135,15 @@
     readerSection.querySelector('#ksbd-image-container').appendChild(comic.cloneNode(true))
     document.body.appendChild(readerSection)
 
-    await Promise.allSettled(promises)
+    const results = await Promise.allSettled([nextPromise, previousPromise])
+    PageStorage['next-page'] = results[0].value
+    PageStorage['previous-page'] = results[1].value
+    console.log(PageStorage)
   }
 
   async function nextPage() {
     console.log("Next page call");
+    console.log(PageStorage)
     history.pushState(null, null, PageStorage['next-page'].URL)
     comic = document.querySelector(Selectors.readerComic)
     comic.replaceWith(PageStorage['next-page'].node)
@@ -143,11 +151,12 @@
     // Shuffle PageStorage
     PageStorage["previous-page"] = PageStorage["current-page"]
     PageStorage["current-page"] = PageStorage["next-page"]
-    prevPromise = preloadPage(PageStorage["current-page"].next, 'next-page')
+    PageStorage['next-page'] = await preloadPage(PageStorage["current-page"].next)
   }
 
-  async function prevPage() {
+  async function previousPage() {
     console.log("Previous page call");
+    console.log(PageStorage)
     history.pushState(null, null, PageStorage['previous-page'].URL)
     comic = document.querySelector(Selectors.readerComic)
     comic.replaceWith(PageStorage['previous-page'].node)
@@ -155,7 +164,7 @@
     // Shuffle PageStorage
     PageStorage["next-page"] = PageStorage["current-page"]
     PageStorage["current-page"] = PageStorage["previous-page"]
-    PageStorage["previous-page"] = preloadPage(PageStorage["previous-page"].previous, 'next-page')
+    PageStorage['previous-page'] = await preloadPage(PageStorage["previous-page"].previous)
   }
 
   async function reset() {
@@ -183,8 +192,8 @@
       if (e.target.classList.contains("next-page")) {
           await nextPage()
       }
-      else if (e.target.classList.contains("prev-page")) {
-          await prevPage()
+      else if (e.target.classList.contains("previous-page")) {
+          await previousPage()
       }
   }
   /**
@@ -194,10 +203,15 @@
   browser.runtime.onMessage.addListener(async (message) => {
     console.log(`Got a message! ${message}`)
     if (message.command === "convert") {
-      await convertToReader();
+      converted = true
+      await convertToReader()
       document.querySelector(".reader").addEventListener("click", listener)
     } else if (message.command === "reset") {
-      await reset();
+      converted = false
+      await reset()
+    } else if (message.command === "converted?") {
+      console.log(`Response to query: ${converted}`)
+      return Promise.resolve({result: converted})
     }
   });
 
