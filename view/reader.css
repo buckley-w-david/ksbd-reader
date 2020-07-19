@@ -1,0 +1,22 @@
+body > :not(.reader) {
+    display: none;
+}
+
+.reader {
+    height: 100%;
+    margin-top: 10px;
+    margin-bottom: auto;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-direction: column;
+}
+
+.reader > :first-child {
+    margin-top: 5px;
+    margin-bottom: 5px;
+}
+
+.reader > :not(:first-child) {
+    margin-bottom: 5px;
+}

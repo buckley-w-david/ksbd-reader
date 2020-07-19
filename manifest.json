@@ -1,29 +1,28 @@
 {
   "manifest_version": 2,
   "name": "Kill 6 Billion Demons reader",
-  "version": "1.6.0",
+  "version": "2.0.0",
 
-  "description": "Removes all non-reader page elements on killsixbilliondemons.com",
+  "description": "Convert killsixbilliondemons.com into a basic reader SPA",
 
   "icons": {
     "48": "icons/ksbd-48.png"
   },
 
-  "content_scripts": [
-    {
-      "matches": ["*://*.killsixbilliondemons.com/comic/*"],
-      "js": ["ksbd-reader.js"]
-    }
-  ],
+  "browser_action": {
+      "default_icon": "icons/ksbd-48.png",
+      "default_title": "KSBD Reader"
+  },
 
   "permissions": [
     "browsingData",
-    "storage"
+    "activeTab",
+    "*://killsixbilliondemons.com/*"
   ],
 
-  "applications": {
-    "gecko": {
-      "id": "ksbd-reader@davidbuckley.ca"
-    }
-  }
+  "background": {
+    "scripts": ["reader-background.js"]
+  },
+
+  "web_accessible_resources": ["view/*"]
 }
