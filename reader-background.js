@@ -16,10 +16,12 @@ function convert(tab) {
  * send a "reset" message to the content script in the active tab.
  */
 function reset(tab) {
-  browser.tabs.removeCSS({file: "view/reader.css"}).then(() => {
-    browser.tabs.sendMessage(tab.id, {
-      command: "reset",
-    });
+  browser.tabs
+        .removeCSS({file: "view/reader.css"})
+        .then(() => {
+            browser.tabs.sendMessage(tab.id, {
+              command: "reset",
+            });
   });
 }
 

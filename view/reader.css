@@ -20,3 +20,32 @@ body > :not(.reader) {
 .reader > :not(:first-child) {
     margin-bottom: 5px;
 }
+
+.reader .image-container {
+    display: flex;
+    flex-direction: column;
+}
+
+.reader.fullscreen .image-container {
+    position: absolute;
+    top: 0;
+    left: 0;
+    bottom: 0px;
+    width: 100%;
+    height: 100%;
+}
+
+.reader.fullscreen img {
+    margin: auto;
+    height: 100%;
+    width: 100%;
+    position: relative;
+    object-fit: contain;
+    transition: left 500ms;
+}
+
+.reader.fullscreen .nav-container {
+    display: none;
+}
+
+
