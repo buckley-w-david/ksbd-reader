@@ -205,6 +205,12 @@
   async function reset() {
     console.log("Reset page call");
     document.querySelector(".reader").remove();
+      window
+        .removeEventListener("keyup", keyupListener);
+      document
+        .documentElement
+        .removeEventListener("keydown", disableListener);
+
     if (document.location !== PageStorage["current-page"].URL) {
       document.location = PageStorage["current-page"].URL;
     }
@@ -302,6 +308,18 @@
       }
     }
   }
+
+  async function keyupListener(event) {
+      if (event.keyCode === 37 /*Left*/)
+          await previousPage()
+      else if (event.keyCode === 39 /*Left*/)
+          await nextPage()
+  }
+
+  function disableListener(event) {
+      event.stopPropagation()
+  }
+
   /**
    * Listen for messages from the background script.
    * Call "convertToReader()" or "reset()".
@@ -313,6 +331,11 @@
       document
         .querySelector(".reader")
         .addEventListener("click", clickListener);
+      window
+        .addEventListener("keyup", keyupListener);
+      document
+        .documentElement
+        .addEventListener("keydown", disableListener);
     } else if (message.command === "reset") {
       converted = false;
       await reset();
